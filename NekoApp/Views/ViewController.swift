@@ -37,8 +37,6 @@ class ViewController: UICollectionViewController {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "catCollectionViewCell", for: indexPath) as! catCollectionViewCell
         cell.toys = catToys
         cell.catName = catName
-        cell.delegate = self
-        cell.tableView.reloadData()
         return cell
     }
 
@@ -49,28 +47,6 @@ extension ViewController: UICollectionViewDelegateFlowLayout {
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         return CGSize(width: 300, height: collectionView.bounds.height * 0.22)
-    }
-    
-}
-
-/*
- This function will be called everytime a toy is transferred
- */
-extension ViewController: dragAndDropActionDelegate {
-    
-    func moveToy(toyName: String, fromCat: String, toCat: String) {
-        //Take the toy away from the fromCat
-        var fromCatToys = catToys[fromCat] ?? []
-        fromCatToys.removeAll { (toyNameInArray) -> Bool in
-            return toyNameInArray == toyName
-        }
-        catToys[fromCat] = fromCatToys
-        //Give the toy to new cat
-        var toCatToys = catToys[toCat] ?? []
-        toCatToys.append(toyName)
-        catToys[toCat] = toCatToys
-        //Update the fromCat tableview
-        collectionView.reloadData()
     }
     
 }
@@ -95,8 +71,4 @@ extension ViewController {
     }
     
     
-}
-
-protocol dragAndDropActionDelegate: AnyObject {
-    func moveToy(toyName: String, fromCat: String, toCat: String)
 }
