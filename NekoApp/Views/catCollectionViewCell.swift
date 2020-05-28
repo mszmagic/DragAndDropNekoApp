@@ -17,6 +17,7 @@ class catCollectionViewCell: UICollectionViewCell, UITableViewDelegate, UITableV
     var catName: String = ""
     
     @IBOutlet weak var tableView: UITableView!
+    weak var delegate: dragAndDropActionDelegate?
     
     override func awakeFromNib() {
         tableView.delegate = self
@@ -52,6 +53,8 @@ class catCollectionViewCell: UICollectionViewCell, UITableViewDelegate, UITableV
 extension catCollectionViewCell: UITableViewDragDelegate {
     
     func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
+        //Remember the original owner of the toy so that we can remove the toy from the original cat object
+        session.localContext = catName
         //Provide the drag information
         ///Prepare the toy name
         let toyName = toys[indexPath.row]
@@ -79,12 +82,10 @@ extension catCollectionViewCell: UITableViewDropDelegate {
             //Get the content of the string
             coordinator.session.loadObjects(ofClass: NSString.self) { (fetchedItems) in
                 guard let toyName = fetchedItems.first as? String else { return }
-                //Append the data
-                let destinationIndex = coordinator.destinationIndexPath ?? IndexPath(row: 0, section: 0)
-                self.toys.insert(toyName, at: destinationIndex.row)
-                tableView.beginUpdates()
-                tableView.insertRows(at: [destinationIndex], with: .automatic)
-                tableView.endUpdates()
+                //Tell the delegate to transfer the toy from the original cat to the new cat
+                if let originalCatName = coordinator.session.localDragSession?.localContext as? String {
+                    self.delegate?.moveToy(toyName: toyName, fromCat: originalCatName, toCat: self.catName)
+                }
             }
         }
     }
