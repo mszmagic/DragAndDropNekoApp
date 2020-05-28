@@ -8,6 +8,7 @@
 
 import Foundation
 import UIKit
+import MobileCoreServices
 
 class catCollectionViewCell: UICollectionViewCell, UITableViewDelegate, UITableViewDataSource {
     
@@ -21,6 +22,11 @@ class catCollectionViewCell: UICollectionViewCell, UITableViewDelegate, UITableV
         tableView.delegate = self
         tableView.dataSource = self
         tableView.reloadData()
+        //Set up drag
+        tableView.dragInteractionEnabled = true
+        tableView.dragDelegate = self
+        //Set up drop
+        tableView.dropDelegate = self
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -37,5 +43,50 @@ class catCollectionViewCell: UICollectionViewCell, UITableViewDelegate, UITableV
         return catName
     }
     
+    
+}
+
+/*
+ Drag delegate
+ */
+extension catCollectionViewCell: UITableViewDragDelegate {
+    
+    func tableView(_ tableView: UITableView, itemsForBeginning session: UIDragSession, at indexPath: IndexPath) -> [UIDragItem] {
+        //Provide the drag information
+        ///Prepare the toy name
+        let toyName = toys[indexPath.row]
+        guard let toyNameData = toyName.data(using: .utf8) else { return [] }
+        ///Prepare the item
+        let provider = NSItemProvider()
+        provider.registerDataRepresentation(forTypeIdentifier: kUTTypePlainText as String, visibility: .all) { completion in
+            completion(toyNameData, nil)
+            return nil
+        }
+        let item = UIDragItem(itemProvider: provider)
+        return [item]
+    }
+    
+}
+
+/*
+ Drop delegate
+ */
+extension catCollectionViewCell: UITableViewDropDelegate {
+    
+    func tableView(_ tableView: UITableView, performDropWith coordinator: UITableViewDropCoordinator) {
+        //Check if the item type is correct
+        if coordinator.session.hasItemsConforming(toTypeIdentifiers: [kUTTypePlainText as String]) {
+            //Get the content of the string
+            coordinator.session.loadObjects(ofClass: NSString.self) { (fetchedItems) in
+                guard let toyName = fetchedItems.first as? String else { return }
+                //Append the data
+                let destinationIndex = coordinator.destinationIndexPath ?? IndexPath(row: 0, section: 0)
+                self.toys.insert(toyName, at: destinationIndex.row)
+                tableView.beginUpdates()
+                tableView.insertRows(at: [destinationIndex], with: .automatic)
+                tableView.endUpdates()
+            }
+        }
+    }
     
 }
